@@ -41,13 +41,20 @@ export function DashboardClientLayout({
   console.log("[Dashboard] Auth state:", { loading, isLoggedIn, hasUser: !!user, hasAccessToken: !!accessToken })
 
   // Fire-and-forget redirect if not logged in (only after loading completes)
-  // Allow vibe-hiring page to be accessed without authentication
+  // Allow vibe-hiring and campaigns pages to be accessed without authentication
   useEffect(() => {
     if (!loading && !isLoggedIn) {
       const currentPath = window.location.pathname
-      // Allow access to vibe-hiring without authentication
-      if (currentPath === "/dashboard/vibe-hiring" || currentPath.startsWith("/dashboard/vibe-hiring/")) {
-        console.log("[Dashboard] Allowing access to vibe-hiring without authentication")
+      // Allow access to vibe-hiring and campaigns without authentication
+      const allowedPaths = [
+        "/dashboard/vibe-hiring",
+        "/dashboard/campaigns"
+      ]
+      const isAllowed = allowedPaths.some(path => 
+        currentPath === path || currentPath.startsWith(path + "/")
+      )
+      if (isAllowed) {
+        console.log("[Dashboard] Allowing access without authentication")
         return
       }
       console.log("[Dashboard] Not logged in, redirecting to home")
@@ -82,11 +89,17 @@ export function DashboardClientLayout({
     )
   }
 
-  // Redirect happening, show nothing (unless it's vibe-hiring which we allow)
+  // Redirect happening, show nothing (unless it's an allowed path which we allow)
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
-  const isVibeHiring = currentPath === "/dashboard/vibe-hiring" || currentPath.startsWith("/dashboard/vibe-hiring/")
+  const allowedPaths = [
+    "/dashboard/vibe-hiring",
+    "/dashboard/campaigns"
+  ]
+  const isAllowed = allowedPaths.some(path => 
+    currentPath === path || currentPath.startsWith(path + "/")
+  )
   
-  if (!isLoggedIn && !isVibeHiring) {
+  if (!isLoggedIn && !isAllowed) {
     return null
   }
 
