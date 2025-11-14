@@ -94,11 +94,8 @@ export function Hero() {
   }, [currentMessageIndex])
 
   const handleHireTalent = () => {
-    if (isLoggedIn) {
-      window.location.href = "/dashboard"
-    } else {
-      window.location.href = buildSignupUrl("/dashboard")
-    }
+    // Bypass authentication and go directly to vibe-hiring (chat interface)
+    window.location.href = "/dashboard/vibe-hiring"
   }
 
   return (

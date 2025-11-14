@@ -41,8 +41,15 @@ export function DashboardClientLayout({
   console.log("[Dashboard] Auth state:", { loading, isLoggedIn, hasUser: !!user, hasAccessToken: !!accessToken })
 
   // Fire-and-forget redirect if not logged in (only after loading completes)
+  // Allow vibe-hiring page to be accessed without authentication
   useEffect(() => {
     if (!loading && !isLoggedIn) {
+      const currentPath = window.location.pathname
+      // Allow access to vibe-hiring without authentication
+      if (currentPath === "/dashboard/vibe-hiring" || currentPath.startsWith("/dashboard/vibe-hiring/")) {
+        console.log("[Dashboard] Allowing access to vibe-hiring without authentication")
+        return
+      }
       console.log("[Dashboard] Not logged in, redirecting to home")
       window.location.href = "/"
     }
@@ -75,8 +82,11 @@ export function DashboardClientLayout({
     )
   }
 
-  // Redirect happening, show nothing
-  if (!isLoggedIn) {
+  // Redirect happening, show nothing (unless it's vibe-hiring which we allow)
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
+  const isVibeHiring = currentPath === "/dashboard/vibe-hiring" || currentPath.startsWith("/dashboard/vibe-hiring/")
+  
+  if (!isLoggedIn && !isVibeHiring) {
     return null
   }
 
