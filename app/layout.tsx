@@ -9,7 +9,7 @@ import { PropelAuthProvider } from "@/lib/propelauth-client"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "HireFirst - Find Your Next Hire",
+  title: "Hazel AI - Recruitment Copilot",
   description: "Connect startups with top tech, AI, sales, and engineering talent",
   generator: 'v0.app'
 }
