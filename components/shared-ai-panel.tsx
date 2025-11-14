@@ -666,10 +666,11 @@ export default function SharedAIPanel({
             {/* CHAT TAB - scrollable messages, input pinned */}
             <TabsContent
               value="ai-chat"
-              className="flex-1 mt-0 px-3 data-[state=inactive]:hidden"
+              className="flex-1 mt-0 px-3 data-[state=inactive]:hidden flex flex-col overflow-hidden"
             >
-              <div className="relative flex flex-col h-full overflow-hidden">
-                <ScrollArea className="h-full">
+              <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                {/* Messages area - scrollable */}
+                <ScrollArea className="flex-1 min-h-0">
                   {/* Suggestions (only when no messages) */}
                   {aiChatMessages.length === 0 && !isAiChatLoading && (
                     <div className="p-4 border-b border-border bg-muted">
@@ -708,7 +709,7 @@ export default function SharedAIPanel({
                   )}
 
                   {/* Messages */}
-                  <div className="space-y-4 p-4 pb-24">
+                  <div className="space-y-4 p-4">
                     {aiChatMessages.map((m) => (
                       <div
                         key={m.id}
@@ -755,8 +756,8 @@ export default function SharedAIPanel({
                   </div>
                 </ScrollArea>
 
-                {/* Input pinned to bottom of chat tab */}
-                <div className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-3 pb-3 pt-2">
+                {/* Input fixed at bottom */}
+                <div className="flex-shrink-0 bg-background border-t border-border px-3 pb-3 pt-2">
                   <div className="flex gap-2">
                     <Input
                       placeholder="Ask about jobs, candidates, or skills..."
