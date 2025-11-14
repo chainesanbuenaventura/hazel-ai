@@ -1,6 +1,8 @@
 import { Header } from "@/components/header"
 import { Hero } from "@/components/hero"
 import { Features } from "@/components/features"
+import { AIAgents } from "@/components/ai-agents"
+import { Screenshots } from "@/components/screenshots"
 import { HowItWorks } from "@/components/how-it-works"
 import { Roles } from "@/components/roles"
 import { CTA } from "@/components/cta"
@@ -11,6 +13,8 @@ export default function Home() {
     <main className="min-h-screen">
       <Header />
       <Hero />
+      <AIAgents />
+      <Screenshots />
       <Features />
       <HowItWorks />
       <Roles />

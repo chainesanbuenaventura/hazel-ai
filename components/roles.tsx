@@ -31,8 +31,15 @@ const roles = [
 
 export function Roles() {
   return (
-    <section id="roles" className="border-b border-border py-20 sm:py-32 bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="roles" className="border-b border-border py-20 sm:py-32 bg-gradient-to-b from-background to-muted/30 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 -z-10 overflow-hidden opacity-40">
+        <div className="absolute top-10 left-1/4 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
+      </div>
+      {/* Section separator */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl text-gray-700">
             Find the right role for your startup

@@ -29,8 +29,15 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="border-b border-border py-20 sm:py-32 bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="how-it-works" className="border-b border-border py-20 sm:py-32 bg-gradient-to-b from-muted/20 via-background to-muted/10 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 -z-10 overflow-hidden opacity-35">
+        <div className="absolute bottom-20 left-1/3 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-20 right-1/3 w-72 h-72 bg-primary/5 rounded-full blur-3xl"></div>
+      </div>
+      {/* Section separator */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl text-gray-700">How it works</h2>
           <p className="mt-4 text-pretty text-lg leading-relaxed text-muted-foreground">
