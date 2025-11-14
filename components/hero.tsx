@@ -114,7 +114,7 @@ export function Hero() {
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
               <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-primary">AI-Powered Hiring Assistant</span>
+              <span className="text-sm font-medium text-primary">Cursor for Recruitment</span>
             </div>
             <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-6xl text-gray-700 mb-4">
               {FULL_TEXT}

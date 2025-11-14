@@ -13,7 +13,8 @@ const agents = [
       "Salary range analysis",
       "Experience level matching"
     ],
-    color: "from-blue-500 to-cyan-500"
+    gradient: "linear-gradient(to right, #D6E8FF, #E8F2FF)",
+    iconColor: "#7AB3E6"
   },
   {
     icon: FileText,
@@ -25,7 +26,8 @@ const agents = [
       "Template generation",
       "Multi-language support"
     ],
-    color: "from-purple-500 to-pink-500"
+    gradient: "linear-gradient(to right, #DBECFF, #EDF5FF)",
+    iconColor: "#82B8E8"
   },
   {
     icon: Users,
@@ -37,7 +39,8 @@ const agents = [
       "Action recommendations",
       "Status updates"
     ],
-    color: "from-green-500 to-emerald-500"
+    gradient: "linear-gradient(to right, #D6E8FF, #E0F0FF)",
+    iconColor: "#7AB3E6"
   },
   {
     icon: MessageSquare,
@@ -49,7 +52,8 @@ const agents = [
       "Interview scheduling",
       "Follow-up automation"
     ],
-    color: "from-orange-500 to-red-500"
+    gradient: "linear-gradient(to right, #D1E5FF, #E8F2FF)",
+    iconColor: "#75ADE3"
   },
   {
     icon: Sparkles,
@@ -61,7 +65,8 @@ const agents = [
       "Quality metrics",
       "Trend analysis"
     ],
-    color: "from-indigo-500 to-purple-500"
+    gradient: "linear-gradient(to right, #D6E8FF, #F0F7FF)",
+    iconColor: "#7AB3E6"
   },
   {
     icon: Zap,
@@ -73,7 +78,8 @@ const agents = [
       "Candidate scoring",
       "Quick filtering"
     ],
-    color: "from-yellow-500 to-amber-500"
+    gradient: "linear-gradient(to right, #DBECFF, #E8F2FF)",
+    iconColor: "#82B8E8"
   }
 ]
 
@@ -108,11 +114,21 @@ export function AIAgents() {
               className="group relative overflow-hidden transition-all duration-500 border-2 border-border rounded-2xl bg-card cursor-pointer shadow-sm hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-2 hover:border-primary/30"
             >
               {/* Accent Line */}
-              <div className={`absolute top-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r ${agent.color}`}></div>
+              <div 
+                className="absolute top-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ background: agent.gradient }}
+              ></div>
               
               <CardHeader>
-                <div className={`flex h-14 w-14 items-center justify-center rounded-xl border border-primary/20 shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all duration-300 bg-gradient-to-br ${agent.color} bg-opacity-10`}>
-                  <agent.icon className={`h-7 w-7 bg-gradient-to-br ${agent.color} bg-clip-text text-transparent`} />
+                <div 
+                  className="flex h-14 w-14 items-center justify-center rounded-xl border border-primary/20 shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all duration-300"
+                  style={{ background: agent.gradient, opacity: 0.3, color: agent.iconColor }}
+                >
+                  <agent.icon 
+                    className="h-7 w-7"
+                    style={{ color: agent.iconColor, stroke: agent.iconColor }}
+                    strokeWidth={2}
+                  />
                 </div>
                 <CardTitle className="mt-4 text-xl font-bold text-gray-700 group-hover:text-primary transition-colors duration-300">
                   {agent.name}

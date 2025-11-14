@@ -12,7 +12,6 @@ import {
   Send,
   ChevronLeft,
   ChevronRight,
-  ClipboardPen,
   Search,
   Sparkles,
 } from "lucide-react"
@@ -47,11 +46,6 @@ const mainItems = [
     title: "Message Copilot",
     url: "/dashboard/linkedin-outreach",
     icon: Send,
-  },
-  {
-    title: "Brief->Job",
-    url: "/dashboard/brief-to-job",
-    icon: ClipboardPen,
   },
   {
     title: "Vibe Hiring",

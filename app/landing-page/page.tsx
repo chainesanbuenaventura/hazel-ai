@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import { Header } from "@/components/header"
 import { Hero } from "@/components/hero"
+import { AgentIntro } from "@/components/agent-intro"
 import { Features } from "@/components/features"
 import { AIAgents } from "@/components/ai-agents"
 import { Screenshots } from "@/components/screenshots"
@@ -17,6 +18,7 @@ export default function Home() {
     <main className="min-h-screen">
       <Header />
       <Hero />
+      <AgentIntro />
       <AIAgents />
       <Screenshots />
       <Features />

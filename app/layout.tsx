@@ -9,7 +9,7 @@ import { PropelAuthProvider } from "@/lib/propelauth-client"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Hazel AI - Recruitment Copilot",
+  title: "Hazel AI - Cursor for Recruitment",
   description: "Connect startups with top tech, AI, sales, and engineering talent",
   generator: 'v0.app'
 }
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <PropelAuthProvider>
