@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, Copy, Send, X, Sparkles, FileText, Building2, MapPin, DollarSign, Briefcase, Users, CheckCircle, Code, Euro, Globe, Plus, MessageSquare, Search, Folder, Clock, Layers } from "lucide-react"
+import { Upload, Copy, Send, X, Sparkles, FileText, Building2, MapPin, DollarSign, Briefcase, Users, CheckCircle, Code, Euro, Globe, Plus, MessageSquare, Search, Folder, Clock, Layers, Loader2 } from "lucide-react"
 import SharedAIPanel from "@/components/shared-ai-panel"
 import { useAIPanel } from "@/components/ai-panel-context"
 
@@ -80,6 +80,7 @@ export default function VibeHiringPage() {
   const [isHoveringLogo, setIsHoveringLogo] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isCreatingCampaign, setIsCreatingCampaign] = useState(false)
 
   // AI Panel context
   const {
@@ -357,19 +358,156 @@ Additional Information:
 - Equity/Bonus: ${offer.advanced.equity_bonus_info}`
   }
 
-  const handleCreateCampaign = () => {
+  const handleCreateCampaign = async () => {
     if (!jobOffer) return
     
-    // Convert the job offer JSON to a concatenated text format
-    const campaignText = formatJobOfferForCampaign(jobOffer)
+    setIsCreatingCampaign(true)
     
-    // Navigate to campaigns page with the text pre-filled
-    const encodedText = encodeURIComponent(campaignText)
-    window.open(`/dashboard/campaigns/new?brief=${encodedText}`, '_blank')
+    try {
+      // Step 1: Convert the job offer JSON to a concatenated text format
+      const campaignText = formatJobOfferForCampaign(jobOffer)
+      
+      // Step 2: Call extract_job_json API via proxy
+      const extractResponse = await fetch('/api/extract-job-json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rawJobJson: campaignText
+        })
+      })
+      
+      if (!extractResponse.ok) {
+        const errorData = await extractResponse.json().catch(() => ({}))
+        throw new Error(errorData.error || `Extract API failed: ${extractResponse.status}`)
+      }
+      
+      const extractedData = await extractResponse.json()
+      
+      // Step 3: Sanitize the data - convert null values to empty strings for required string fields
+      const sanitizeData = (data: any): any => {
+        if (data === null || data === undefined) {
+          return ""
+        }
+        if (typeof data === "object" && !Array.isArray(data)) {
+          const sanitized: any = {}
+          for (const key in data) {
+            if (data[key] === null) {
+              // For required string fields, use empty string instead of null
+              sanitized[key] = ""
+            } else if (typeof data[key] === "object") {
+              sanitized[key] = sanitizeData(data[key])
+            } else {
+              sanitized[key] = data[key]
+            }
+          }
+          return sanitized
+        }
+        if (Array.isArray(data)) {
+          return data.map(item => sanitizeData(item))
+        }
+        return data
+      }
+      
+      const sanitizedContent = sanitizeData(extractedData)
+      
+      // Ensure required string fields are not null
+      if (sanitizedContent.core) {
+        sanitizedContent.core.company_name = sanitizedContent.core.company_name || ""
+        sanitizedContent.core.location = sanitizedContent.core.location || ""
+        sanitizedContent.core.job_title = sanitizedContent.core.job_title || ""
+        sanitizedContent.core.contract_type = sanitizedContent.core.contract_type || ""
+        sanitizedContent.core.job_description = sanitizedContent.core.job_description || ""
+      }
+      
+      // Step 4: Format the data for ingest_campaign API
+      // The API expects an array with index and message structure
+      const ingestPayload = [
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: sanitizedContent
+          }
+        }
+      ]
+      
+      // Step 4: Call ingest_campaign API via proxy
+      const ingestResponse = await fetch('/api/ingest-campaign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(ingestPayload)
+      })
+      
+      if (!ingestResponse.ok) {
+        const errorData = await ingestResponse.json().catch(() => ({}))
+        throw new Error(errorData.error || `Ingest API failed: ${ingestResponse.status}`)
+      }
+      
+      const ingestResult = await ingestResponse.json()
+      
+      // Step 5: Fetch campaigns to get the newly created campaign
+      console.log('🔄 Fetching campaigns to find newly created campaign...')
+      const campaignsResponse = await fetch('/api/campaigns-proxy', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      })
+      
+      if (!campaignsResponse.ok) {
+        throw new Error(`Failed to fetch campaigns: ${campaignsResponse.status}`)
+      }
+      
+      const campaignsData = await campaignsResponse.json()
+      
+      if (campaignsData.success && Array.isArray(campaignsData.data) && campaignsData.data.length > 0) {
+        // Campaigns are sorted newest first, so the first one should be our new campaign
+        const newCampaign = campaignsData.data[0]
+        const campaignId = newCampaign.campaign_id
+        
+        console.log('✅ Found new campaign:', campaignId)
+        
+        // Step 6: Redirect to the newly created campaign
+        window.location.href = `/dashboard/campaigns/${campaignId}`
+      } else {
+        // Fallback: redirect to campaigns page if we can't find the new campaign
+        console.warn('⚠️ Could not find new campaign, redirecting to campaigns page')
+        window.location.href = '/dashboard/campaigns'
+      }
+      
+    } catch (error) {
+      console.error('Error creating campaign:', error)
+      setIsCreatingCampaign(false)
+      alert(`Failed to create campaign: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
   // Hide panel initially until first message is submitted
   const shouldShowPanel = hasSubmitted
+
+  // Show loading overlay when creating campaign
+  if (isCreatingCampaign) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="flex space-x-2 justify-center">
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" />
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold">Creating Campaign...</h2>
+            <p className="text-muted-foreground">Please wait while we create your recruitment campaign</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-screen gap-4 relative" style={{ marginRight: shouldShowPanel ? (isRightPanelCollapsed ? '4rem' : '25rem') : '0' }}>
@@ -536,9 +674,19 @@ Additional Information:
                         <Button
                           size="sm"
                           onClick={handleCreateCampaign}
+                          disabled={isCreatingCampaign}
                         >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create Campaign
+                          {isCreatingCampaign ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Creating...
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-4 w-4 mr-2" />
+                              Create Campaign
+                            </>
+                          )}
                         </Button>
                       )}
                     </CardTitle>
