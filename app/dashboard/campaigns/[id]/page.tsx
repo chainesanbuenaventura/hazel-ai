@@ -390,6 +390,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
             campaignPageTab={activeTab}
             campaignId={campaignId}
             onSourcingQueryUpdate={setSourcingNewQuery}
+            sourcingNewQuery={sourcingNewQuery}
           />
         </div>
       </SidebarInset>

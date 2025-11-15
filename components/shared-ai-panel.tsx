@@ -91,6 +91,7 @@ interface SharedAIPanelProps {
   campaignPageTab?: string
   campaignId?: string
   onSourcingQueryUpdate?: (newQuery: string) => void
+  sourcingNewQuery?: string
 }
 
 export default function SharedAIPanel({
@@ -115,6 +116,7 @@ export default function SharedAIPanel({
   campaignPageTab,
   campaignId,
   onSourcingQueryUpdate,
+  sourcingNewQuery = "",
 }: SharedAIPanelProps) {
   const [aiChatMessages, setAiChatMessages] = useState<
     Array<{ id: string; content: string; sender: "user" | "ai" }>
@@ -296,6 +298,64 @@ export default function SharedAIPanel({
     fetchAllData()
   }, [])
 
+  // Helper function to fetch JD
+  const fetchJobDescription = async (campaignIdToUse: string): Promise<string> => {
+    try {
+      const campaignResponse = await fetch("/api/campaigns-proxy")
+      if (campaignResponse.ok) {
+        const result = await campaignResponse.json()
+        if (result?.success && Array.isArray(result.data)) {
+          const campaign = result.data.find(
+            (c: any) => c.campaign_id === campaignIdToUse
+          )
+          if (campaign?.job) {
+            const job = campaign.job
+            const parts: string[] = []
+            
+            // Job Description
+            if (job.description) {
+              parts.push(job.description)
+            }
+            
+            // Skills
+            if (job.skills && Array.isArray(job.skills) && job.skills.length > 0) {
+              const skillsList = job.skills
+                .map((s: any) => {
+                  if (typeof s === 'string') return s
+                  return s.name || s
+                })
+                .filter(Boolean)
+                .join(", ")
+              if (skillsList) {
+                parts.push(`\n\nSkills: ${skillsList}`)
+              }
+            }
+            
+            // Seniority
+            if (job.seniority) {
+              parts.push(`\n\nSeniority: ${job.seniority}`)
+            }
+            
+            // Requirements
+            if (job.requirements && Array.isArray(job.requirements) && job.requirements.length > 0) {
+              const requirementsList = job.requirements
+                .filter(Boolean)
+                .join("\n- ")
+              if (requirementsList) {
+                parts.push(`\n\nRequirements:\n- ${requirementsList}`)
+              }
+            }
+            
+            return parts.join("")
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching campaign data:", error)
+    }
+    return ""
+  }
+
   // Chat handler
   const handleAiChat = async (message: string) => {
     if (!message.trim()) return
@@ -309,6 +369,63 @@ export default function SharedAIPanel({
     setIsAiChatLoading(true)
     setAiChatInput("")
 
+    // If we're on the sourcing tab, call the sourcing webhook instead
+    if (campaignPageTab === "sourcing" && campaignId) {
+      try {
+        // Fetch the JD
+        const jdText = await fetchJobDescription(campaignId)
+        
+        // Call the sourcing batch webhook
+        const response = await fetch("/api/start-sourcing-batch", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chatinput: message,
+            currentQuery: sourcingNewQuery || "none",
+            jd: jdText,
+          }),
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          const chatResponse = result.chatResponse || ""
+          const newQueryValue = result.newQuery || ""
+          
+          // Update the sourcing query if callback is provided and new query is returned
+          if (newQueryValue && onSourcingQueryUpdate) {
+            onSourcingQueryUpdate(newQueryValue)
+          }
+          
+          // Display the chat response
+          const aiMsg = {
+            id: (Date.now() + 1).toString(),
+            content: chatResponse || "I received your message.",
+            sender: "ai" as const,
+          }
+          setAiChatMessages((prev) => [...prev, aiMsg])
+        } else {
+          const errorData = await response.json().catch(() => ({}))
+          const errorMsg = errorData.error || "Failed to process your message"
+          setAiChatMessages((prev) => [
+            ...prev,
+            { id: (Date.now() + 1).toString(), content: errorMsg, sender: "ai" },
+          ])
+        }
+      } catch (error) {
+        console.error("Error calling sourcing webhook:", error)
+        setAiChatMessages((prev) => [
+          ...prev,
+          { id: (Date.now() + 1).toString(), content: "Failed to process your message. Please try again.", sender: "ai" },
+        ])
+      } finally {
+        setIsAiChatLoading(false)
+      }
+      return
+    }
+
+    // Regular chat handler for non-sourcing tabs
     try {
       const response = await fetch("/api/chat-proxy", {
         method: "POST",
@@ -576,64 +693,9 @@ export default function SharedAIPanel({
                             setAiChatMessages((prev) => [...prev, userMsg])
                             setIsAiChatLoading(true)
                             
-                            // Fetch the campaign data to get the full JD (description + skills + seniority + requirements)
-                            let jdText = ""
+                            // Fetch the JD using the helper function
                             const campaignIdToUse = campaignId || selectedContextCampaign
-                            if (campaignIdToUse) {
-                              try {
-                                const campaignResponse = await fetch("/api/campaigns-proxy")
-                                if (campaignResponse.ok) {
-                                  const result = await campaignResponse.json()
-                                  if (result?.success && Array.isArray(result.data)) {
-                                    const campaign = result.data.find(
-                                      (c: any) => c.campaign_id === campaignIdToUse
-                                    )
-                                    if (campaign?.job) {
-                                      const job = campaign.job
-                                      const parts: string[] = []
-                                      
-                                      // Job Description
-                                      if (job.description) {
-                                        parts.push(job.description)
-                                      }
-                                      
-                                      // Skills
-                                      if (job.skills && Array.isArray(job.skills) && job.skills.length > 0) {
-                                        const skillsList = job.skills
-                                          .map((s: any) => {
-                                            if (typeof s === 'string') return s
-                                            return s.name || s
-                                          })
-                                          .filter(Boolean)
-                                          .join(", ")
-                                        if (skillsList) {
-                                          parts.push(`\n\nSkills: ${skillsList}`)
-                                        }
-                                      }
-                                      
-                                      // Seniority
-                                      if (job.seniority) {
-                                        parts.push(`\n\nSeniority: ${job.seniority}`)
-                                      }
-                                      
-                                      // Requirements
-                                      if (job.requirements && Array.isArray(job.requirements) && job.requirements.length > 0) {
-                                        const requirementsList = job.requirements
-                                          .filter(Boolean)
-                                          .join("\n- ")
-                                        if (requirementsList) {
-                                          parts.push(`\n\nRequirements:\n- ${requirementsList}`)
-                                        }
-                                      }
-                                      
-                                      jdText = parts.join("")
-                                    }
-                                  }
-                                }
-                              } catch (error) {
-                                console.error("Error fetching campaign data:", error)
-                              }
-                            }
+                            const jdText = campaignIdToUse ? await fetchJobDescription(campaignIdToUse) : ""
 
                             // Call the webhook
                             let chatResponse = ""

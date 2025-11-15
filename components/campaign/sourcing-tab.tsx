@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   Select,
@@ -11,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Users, Play, CheckCircle2, Loader2 } from "lucide-react"
+import { Users, CheckCircle2, Loader2 } from "lucide-react"
 
 interface SourcingTabProps {
   campaignId?: string
@@ -75,41 +74,12 @@ export function SourcingTab({ campaignId, newQuery }: SourcingTabProps) {
         "Senior ML Researcher",
       ]
 
-  const handleStartBatch = () => {
-    setIsRunning(true)
-    setCurrentStep("generating")
-    
-    // Simulate process
-    setTimeout(() => {
-      setCurrentStep("searching")
-      setTimeout(() => {
-        setCurrentStep("done")
-        setIsRunning(false)
-      }, 3000)
-    }, 2000)
-  }
-
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold mb-2">Sourcing</h2>
         <p className="text-muted-foreground">Find and source candidates for your campaign</p>
       </div>
-
-      {/* Start Batch Button */}
-      <Card>
-        <CardContent className="pt-6">
-          <Button 
-            onClick={handleStartBatch}
-            disabled={isRunning}
-            size="lg"
-            className="w-full sm:w-auto"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Start batch
-          </Button>
-        </CardContent>
-      </Card>
 
       {/* Agentic Process Log */}
       {(isRunning || currentStep !== "idle") && (
