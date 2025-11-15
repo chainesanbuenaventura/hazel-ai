@@ -17,6 +17,7 @@ import {
   Play,
   Pause,
   Loader2,
+  ChevronRight,
 } from "lucide-react"
 
 interface Agent {
@@ -131,6 +132,29 @@ function getStatusBadge(status: DisplayStatus) {
   }
 }
 
+function getBatchStatusBadge(status: "pending review" | "not started" | "done") {
+  switch (status) {
+    case "pending review":
+      return (
+        <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+          Pending Review
+        </Badge>
+      )
+    case "not started":
+      return (
+        <Badge className="bg-gray-100 text-gray-800 border-gray-200">
+          Not Started
+        </Badge>
+      )
+    case "done":
+      return (
+        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">
+          Done
+        </Badge>
+      )
+  }
+}
+
 interface OverviewTabProps {
   onNavigateToTab?: (tab: string) => void
   campaignId?: string
@@ -159,6 +183,55 @@ export function OverviewTab({ onNavigateToTab, campaignId }: OverviewTabProps) {
     x: 0,
     y: 0,
   })
+
+  // Batch data for sourcing agent
+  const [sourcingBatch, setSourcingBatch] = useState<{
+    batchNumber: number
+    totalBatches: number | "NA"
+    totalCandidates: number
+    goodFits: number
+    tier: string
+    status: "pending review" | "not started" | "done"
+  } | null>(null)
+  const [isLoadingBatch, setIsLoadingBatch] = useState(false)
+
+  // Fetch sourcing batch data
+  useEffect(() => {
+    if (!campaignId) return
+
+    const fetchBatchData = async () => {
+      setIsLoadingBatch(true)
+      try {
+        // TODO: Replace with actual API endpoint
+        // const response = await fetch(`/api/sourcing-batch?campaign_id=${campaignId}`)
+        // const data = await response.json()
+        // setSourcingBatch(data)
+        
+        // Mock data for now - replace with API call
+        const mockData = {
+          batchNumber: 1,
+          totalBatches: "NA" as number | "NA",
+          totalCandidates: 0,
+          goodFits: 0,
+          tier: "",
+          status: "not started" as "pending review" | "not started" | "done",
+        }
+        
+        // If totalBatches is "NA" or batchNumber is 1, status should be "not started"
+        if (mockData.totalBatches === "NA" || mockData.batchNumber === 1) {
+          mockData.status = "not started"
+        }
+        
+        setSourcingBatch(mockData)
+      } catch (error) {
+        console.error("Failed to fetch sourcing batch:", error)
+      } finally {
+        setIsLoadingBatch(false)
+      }
+    }
+
+    fetchBatchData()
+  }, [campaignId])
 
   const [agentStatusOverrides, setAgentStatusOverrides] = useState<
     Record<string, Agent["status"] | undefined>
@@ -451,11 +524,11 @@ export function OverviewTab({ onNavigateToTab, campaignId }: OverviewTabProps) {
               const cardHighlightClass = runningHighlight
                 ? "border-2 border-amber-300 bg-amber-50"
                 : highlightSourcing || highlightQualifying
-                  ? "border-2 border-red-500 bg-red-50/50"
+                  ? ""
                   : sourcingReadyHighlight
                     ? "border-2 border-emerald-400 bg-emerald-50/40"
                     : sourcingNotReadyHighlight
-                      ? "border-2 border-red-400 bg-red-50/30"
+                      ? ""
                       : ""
 
               const playIsPause = isRunningAgent
@@ -504,38 +577,32 @@ export function OverviewTab({ onNavigateToTab, campaignId }: OverviewTabProps) {
                           {agent.name}
                         </CardTitle>
 
-                        {agent.id === "sourcing" &&
-                          !isSourcingStatusLoading &&
-                          !sourcingReadyHighlight && (
-                            <>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                Sourcing agent isn&apos;t live yet.
+                        {agent.id === "sourcing" && (
+                          <div className="mt-1">
+                            {isLoadingBatch ? (
+                              <div className="flex items-center justify-center gap-2">
+                                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                                <p className="text-sm text-muted-foreground">Loading batch data...</p>
+                              </div>
+                            ) : sourcingBatch ? (
+                              <p className="text-sm text-center text-muted-foreground">
+                                Latest Batch: <span className="font-semibold text-primary">{sourcingBatch.totalBatches}</span>
                               </p>
-                              <p className="text-sm text-muted-foreground">
-                                Upload candidates to begin.
-                              </p>
-                            </>
-                          )}
-
-                        {agent.id === "sourcing" &&
-                          sourcingReadyHighlight && (
-                            <div className="mt-1 space-y-1">
-                              <p className="text-sm text-emerald-700">
-                                Sourced candidates available.
-                              </p>
-                              <p className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded px-2 py-1 inline-flex items-center gap-2">
-                                <span className="inline-flex items-center gap-1">
-                                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                                  Total sourced
-                                </span>
-                                <span className="font-semibold text-emerald-700">
-                                  {candidateCount}
-                                </span>
-                              </p>
-                            </div>
-                          )}
+                            ) : (
+                              <p className="text-sm text-center text-muted-foreground">No batch data available</p>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {getStatusBadge(displayStatus)}
+                      {agent.id === "sourcing" && sourcingBatch ? (
+                        getBatchStatusBadge(sourcingBatch.status)
+                      ) : agent.id === "sourcing" ? (
+                        <Badge className="bg-gray-100 text-gray-800 border-gray-200">
+                          Not Started
+                        </Badge>
+                      ) : (
+                        getStatusBadge(displayStatus)
+                      )}
                     </div>
                   </CardHeader>
 
@@ -543,22 +610,44 @@ export function OverviewTab({ onNavigateToTab, campaignId }: OverviewTabProps) {
                     <div className="h-full flex flex-col">
                       <div className="flex-1 space-y-2">
                         {agent.id === "sourcing" ? (
-                          isSourcingStatusLoading ? (
-                            <div className="flex flex-col items-center justify-center gap-2 h-full">
-                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                              <p className="text-sm text-muted-foreground">
-                                Checking sourcing status...
-                              </p>
+                          isLoadingBatch ? (
+                            <div className="flex items-center justify-center h-full">
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            </div>
+                          ) : sourcingBatch ? (
+                            <div className="space-y-3">
+                              <div>
+                                <div className="text-3xl font-bold text-primary">
+                                  {sourcingBatch.totalCandidates}
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  candidates
+                                </p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-sm w-full bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200"
+                                onClick={() => {
+                                  if (onNavigateToTab) onNavigateToTab("sourcing")
+                                }}
+                              >
+                                View current batch
+                              </Button>
                             </div>
                           ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleUploadCandidates}
-                              className="w-full text-left justify-start bg-transparent h-8 text-sm"
-                            >
-                              + Add Candidates
-                            </Button>
+                            <div className="flex items-center justify-center h-full">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-sm"
+                                onClick={() => {
+                                  if (onNavigateToTab) onNavigateToTab("sourcing")
+                                }}
+                              >
+                                View current batch
+                              </Button>
+                            </div>
                           )
                         ) : (
                           <>
@@ -624,45 +713,57 @@ export function OverviewTab({ onNavigateToTab, campaignId }: OverviewTabProps) {
 
                       {/* FOOTER */}
                       <div className="absolute inset-x-4 bottom-3 flex items-center justify-between">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setConfigOpen(
-                              configOpen === agent.id ? null : agent.id,
-                            )
-                          }
-                          className="h-7 w-7 p-0"
-                          title={`Configure ${agent.name} parameters`}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
+                        {agent.id !== "sourcing" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              setConfigOpen(
+                                configOpen === agent.id ? null : agent.id,
+                              )
+                            }
+                            className="h-7 w-7 p-0"
+                            title={`Configure ${agent.name} parameters`}
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        )}
 
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={handlePlayPauseClick}
-                          className={`h-7 w-7 p-0 ${
-                            agent.id === "sourcing"
-                              ? "text-slate-400 hover:text-slate-400 hover:bg-transparent"
-                              : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          }`}
-                          title={
-                            agent.id === "sourcing"
-                              ? ""
-                              : playIsPause
-                                ? `Pause ${agent.name}`
-                                : `Start ${agent.name}`
-                          }
-                        >
-                          {agent.id === "sourcing" ? (
+                        {agent.id === "sourcing" ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              // Start the sourcing agent (play it)
+                              setAgentStatus("sourcing", "running")
+                            }}
+                            className="h-7 px-3 gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 ml-auto"
+                          >
                             <Play className="h-4 w-4" />
-                          ) : playIsPause ? (
-                            <Pause className="h-4 w-4" />
-                          ) : (
-                            <Play className="h-4 w-4" />
-                          )}
-                        </Button>
+                            <span className="text-xs">Start New batch</span>
+                          </Button>
+                        ) : (
+                          <>
+                            <div></div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={handlePlayPauseClick}
+                              className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              title={
+                                playIsPause
+                                  ? `Pause ${agent.name}`
+                                  : `Start ${agent.name}`
+                              }
+                            >
+                              {playIsPause ? (
+                                <Pause className="h-4 w-4" />
+                              ) : (
+                                <Play className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </>
+                        )}
                       </div>
 
                       {/* CONFIG */}

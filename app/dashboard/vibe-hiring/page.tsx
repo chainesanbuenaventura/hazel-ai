@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, Copy, Send, X, Sparkles, FileText, Building2, MapPin, DollarSign, Briefcase, Users, CheckCircle, Code, Euro, Globe, Plus, MessageSquare, Search, Folder, Clock, Layers, Loader2 } from "lucide-react"
+import { Upload, Copy, Send, X, Sparkles, FileText, Building2, MapPin, DollarSign, Briefcase, Users, CheckCircle, Code, Euro, Globe, Plus, MessageSquare, Search, Folder, Clock, Layers, Loader2, Bot, Zap, Calendar } from "lucide-react"
 import SharedAIPanel from "@/components/shared-ai-panel"
 import { useAIPanel } from "@/components/ai-panel-context"
 
@@ -81,6 +81,8 @@ export default function VibeHiringPage() {
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isCreatingCampaign, setIsCreatingCampaign] = useState(false)
+  const [bouncingAgentIndex, setBouncingAgentIndex] = useState(0)
+  const clockwiseOrderRef = useRef(0)
 
   // AI Panel context
   const {
@@ -490,19 +492,111 @@ Additional Information:
   // Hide panel initially until first message is submitted
   const shouldShowPanel = hasSubmitted
 
+  // Circular bounce animation for agents (clockwise: top-left → top-right → bottom-right → bottom-left)
+  useEffect(() => {
+    if (!isCreatingCampaign) {
+      clockwiseOrderRef.current = 0
+      setBouncingAgentIndex(0)
+      return
+    }
+    
+    // Clockwise order: 0 (top-left) → 1 (top-right) → 3 (bottom-right) → 2 (bottom-left) → 0
+    const clockwiseOrder = [0, 1, 3, 2]
+    setBouncingAgentIndex(clockwiseOrder[0]) // Start with first agent
+    
+    const interval = setInterval(() => {
+      clockwiseOrderRef.current = (clockwiseOrderRef.current + 1) % clockwiseOrder.length
+      setBouncingAgentIndex(clockwiseOrder[clockwiseOrderRef.current])
+    }, 600) // Change bouncing agent every 600ms
+    
+    return () => clearInterval(interval)
+  }, [isCreatingCampaign])
+
   // Show loading overlay when creating campaign
   if (isCreatingCampaign) {
+    const agents = [
+      { icon: FileText, name: "Job Offer Agent", color: "from-blue-100 to-cyan-100", delay: 0 },
+      { icon: Search, name: "Match Agent", color: "from-purple-100 to-pink-100", delay: 0.3 },
+      { icon: MessageSquare, name: "Outreach Agent", color: "from-green-100 to-emerald-100", delay: 0.6 },
+      { icon: Calendar, name: "Scheduling Agent", color: "from-orange-100 to-red-100", delay: 0.9 },
+    ]
+
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="flex space-x-2 justify-center">
-            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" />
-            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute top-20 right-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 left-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }}></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }}></div>
+        </div>
+
+        <div className="text-center space-y-8 relative z-10 max-w-2xl mx-auto px-4">
+          {/* Main icon with animation */}
+          <div className="relative">
+            <div className="w-24 h-24 mx-auto mb-6 relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full animate-pulse opacity-30"></div>
+              <div className="absolute inset-2 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">
+                <Bot className="w-12 h-12 text-blue-300 animate-bounce" />
+              </div>
+            </div>
+            <div className="flex space-x-2 justify-center">
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+            </div>
           </div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold">Creating Campaign...</h2>
-            <p className="text-muted-foreground">Please wait while we create your recruitment campaign</p>
+
+          {/* Main message */}
+          <div className="space-y-3">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              Preparing Your Recruitment Agents...
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Our AI agents are being configured to find the perfect candidates for your role
+            </p>
+          </div>
+
+          {/* Agent cards */}
+          <div className="grid grid-cols-2 gap-4 mt-8">
+            {agents.map((agent, index) => {
+              const Icon = agent.icon
+              const isBouncing = bouncingAgentIndex === index
+              return (
+                <div
+                  key={index}
+                  className="relative p-4 rounded-xl border border-border bg-card/50 backdrop-blur-sm hover:bg-card transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${agent.color} opacity-0 hover:opacity-10 rounded-xl transition-opacity duration-300`}></div>
+                  <div className="relative flex flex-col items-center space-y-2">
+                    <div className={`p-3 rounded-lg bg-gradient-to-br ${agent.color} shadow-lg transform hover:scale-110 transition-transform duration-300 ${isBouncing ? 'animate-bounce' : ''}`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-xs font-medium text-center">{agent.name}</p>
+                    <div className="flex space-x-1">
+                      <div className={`w-1 h-1 bg-primary rounded-full ${isBouncing ? 'animate-pulse' : ''}`}></div>
+                      <div className={`w-1 h-1 bg-primary rounded-full ${isBouncing ? 'animate-pulse' : ''}`} style={{ animationDelay: "0.2s" }}></div>
+                      <div className={`w-1 h-1 bg-primary rounded-full ${isBouncing ? 'animate-pulse' : ''}`} style={{ animationDelay: "0.4s" }}></div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Progress steps */}
+          <div className="mt-8 space-y-3">
+            <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Extracting job details...</span>
+            </div>
+            <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: "0.5s" }}></div>
+              <span>Configuring matching algorithms...</span>
+            </div>
+            <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: "1s" }}></div>
+              <span>Setting up outreach workflows...</span>
+            </div>
           </div>
         </div>
       </div>

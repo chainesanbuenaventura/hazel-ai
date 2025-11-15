@@ -88,6 +88,9 @@ interface SharedAIPanelProps {
   onCloseProfile?: () => void
   initialMessage?: string | null
   onInitialMessageSent?: () => void
+  campaignPageTab?: string
+  campaignId?: string
+  onSourcingQueryUpdate?: (newQuery: string) => void
 }
 
 export default function SharedAIPanel({
@@ -109,12 +112,16 @@ export default function SharedAIPanel({
   onCloseProfile,
   initialMessage,
   onInitialMessageSent,
+  campaignPageTab,
+  campaignId,
+  onSourcingQueryUpdate,
 }: SharedAIPanelProps) {
   const [aiChatMessages, setAiChatMessages] = useState<
     Array<{ id: string; content: string; sender: "user" | "ai" }>
   >([])
   const [aiChatInput, setAiChatInput] = useState("")
   const [isAiChatLoading, setIsAiChatLoading] = useState(false)
+  const [hasStartedChat, setHasStartedChat] = useState(false)
 
   const [profileTabView, setProfileTabView] = useState("fit")
   const [campaignComboOpen, setCampaignComboOpen] = useState(false)
@@ -124,7 +131,7 @@ export default function SharedAIPanel({
   const [newNoteText, setNewNoteText] = useState("")
   const [isResumeExpanded, setIsResumeExpanded] = useState(false)
 
-  const [chatMode, setChatMode] = useState<"ask" | "copilot">("ask")
+  const [chatMode, setChatMode] = useState<"ask" | "copilot">("copilot")
 
   const [allCampaigns, setAllCampaigns] = useState<RightPanelCampaign[]>([])
   const [allCandidates, setAllCandidates] = useState<RightPanelCandidate[]>([])
@@ -394,170 +401,60 @@ export default function SharedAIPanel({
 
       {!isCollapsed && (
         <>
-          {/* Context selection */}
-          <div className="p-3 border-b border-border bg-muted space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              {/* Campaign Context */}
-              <div>
-                <Label className="text-xs mb-1 block">Campaign Context</Label>
-                <Popover open={campaignComboOpen} onOpenChange={setCampaignComboOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={campaignComboOpen}
-                      className="w-full justify-between h-8 text-xs font-normal"
-                      disabled={isLoadingLists}
-                    >
-                      {isLoadingLists
-                        ? "Loading..."
-                        : selectedContextCampaign
-                        ? allCampaigns.find((c) => c.id === selectedContextCampaign)?.title ||
-                          "Select..."
-                        : "All Campaigns"}
-                      <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[220px] p-0" align="start">
-                    <Command>
-                      <CommandInput
-                        placeholder="Search campaigns..."
-                        className="h-8 text-xs"
-                      />
-                      <CommandEmpty className="text-xs py-2 text-center">
-                        {isLoadingLists ? "Loading..." : "No campaign found."}
-                      </CommandEmpty>
-                      <CommandGroup className="max-h-[220px] overflow-auto">
-                        <CommandItem
-                          value="all"
-                          onSelect={() => {
-                            setSelectedContextCampaign(null)
-                            setCampaignComboOpen(false)
-                          }}
-                          className="text-xs"
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-3 w-3",
-                              !selectedContextCampaign
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                          All Campaigns
-                        </CommandItem>
-                        {allCampaigns.map((campaign) => (
-                          <CommandItem
-                            key={campaign.id}
-                            value={`${campaign.title} ${campaign.company}`}
-                            onSelect={() => {
-                              setSelectedContextCampaign(campaign.id)
-                              setCampaignComboOpen(false)
-                            }}
-                            className="text-xs"
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-3 w-3",
-                                selectedContextCampaign === campaign.id
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            <div className="flex flex-col overflow-hidden">
-                              <span className="truncate">{campaign.title}</span>
-                              <span className="text-[10px] text-muted-foreground truncate">
-                                {campaign.company}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Candidate Context */}
-              <div>
-                <Label className="text-xs mb-1 block">Candidate Context</Label>
-                <Popover open={candidateComboOpen} onOpenChange={setCandidateComboOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={candidateComboOpen}
-                      className="w-full justify-between h-8 text-xs font-normal"
-                      disabled={isLoadingLists}
-                    >
-                      {isLoadingLists
-                        ? "Loading..."
-                        : selectedContextCandidate
-                        ? allCandidates.find((c) => c.id === selectedContextCandidate)
-                            ?.name || "Select..."
-                        : "All Candidates"}
-                      <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[220px] p-0" align="start">
-                    <Command>
-                      <CommandInput
-                        placeholder="Search candidates..."
-                        className="h-8 text-xs"
-                      />
-                      <CommandEmpty className="text-xs py-2 text-center">
-                        {isLoadingLists ? "Loading..." : "No candidate found."}
-                      </CommandEmpty>
-                      <CommandGroup className="max-h-[220px] overflow-auto">
-                        <CommandItem
-                          value="all"
-                          onSelect={() => {
-                            setSelectedContextCandidate(null)
-                            setCandidateComboOpen(false)
-                          }}
-                          className="text-xs"
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-3 w-3",
-                              !selectedContextCandidate
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                          All Candidates
-                        </CommandItem>
-                        {allCandidates.map((candidate) => (
-                          <CommandItem
-                            key={candidate.id}
-                            value={`${candidate.name} ${candidate.email} ${candidate.title}`}
-                            onSelect={() => {
-                              setSelectedContextCandidate(candidate.id)
-                              setCandidateComboOpen(false)
-                            }}
-                            className="text-xs"
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-3 w-3",
-                                selectedContextCandidate === candidate.id
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            <div className="flex flex-col overflow-hidden">
-                              <span className="truncate">{candidate.name}</span>
-                              <span className="text-[10px] text-muted-foreground truncate">
-                                {candidate.title || candidate.email}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
+          {/* Mode toggle */}
+          <div className="px-3 pt-3 pb-2 flex items-center justify-between gap-2 border-b border-border">
+            <span className="text-[10px] text-muted-foreground">Mode</span>
+            <div className="flex gap-1">
+              <Button
+                variant={chatMode === "ask" ? "default" : "outline"}
+                size="sm"
+                className={`h-6 text-[10px] px-2 ${
+                  chatMode === "ask"
+                    ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white border-0"
+                    : "bg-transparent"
+                }`}
+                onClick={() => {
+                  if (chatMode !== "ask") {
+                    setChatMode("ask")
+                    setAiChatMessages((prev) => [
+                      ...prev,
+                      {
+                        id: Date.now().toString(),
+                        content:
+                          "Ask Mode: I'll answer questions without changing your setup.",
+                        sender: "ai",
+                      },
+                    ])
+                  }
+                }}
+              >
+                Ask
+              </Button>
+              <Button
+                variant={chatMode === "copilot" ? "default" : "outline"}
+                size="sm"
+                className={`h-6 text-[10px] px-2 ${
+                  chatMode === "copilot"
+                    ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white border-0"
+                    : "bg-transparent"
+                }`}
+                onClick={() => {
+                  if (chatMode !== "copilot") {
+                    setChatMode("copilot")
+                    setAiChatMessages((prev) => [
+                      ...prev,
+                      {
+                        id: Date.now().toString(),
+                        content:
+                          "Co-Pilot Mode: I'll use your requests to drive candidate ranking, filters, and campaigns.",
+                        sender: "ai",
+                      },
+                    ])
+                  }
+                }}
+              >
+                Co-Pilot
+              </Button>
             </div>
           </div>
 
@@ -606,63 +503,6 @@ export default function SharedAIPanel({
               </TabsTrigger>
             </TabsList>
 
-            {/* Mode toggle */}
-            <div className="px-3 pb-2 flex items-center justify-between gap-2">
-              <span className="text-[10px] text-muted-foreground">Mode</span>
-              <div className="flex gap-1">
-                <Button
-                  variant={chatMode === "ask" ? "default" : "outline"}
-                  size="sm"
-                  className={`h-6 text-[10px] px-2 ${
-                    chatMode === "ask"
-                      ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white border-0"
-                      : "bg-transparent"
-                  }`}
-                  onClick={() => {
-                    if (chatMode !== "ask") {
-                      setChatMode("ask")
-                      setAiChatMessages((prev) => [
-                        ...prev,
-                        {
-                          id: Date.now().toString(),
-                          content:
-                            "Ask Mode: I'll answer questions without changing your setup.",
-                          sender: "ai",
-                        },
-                      ])
-                    }
-                  }}
-                >
-                  Ask
-                </Button>
-                <Button
-                  variant={chatMode === "copilot" ? "default" : "outline"}
-                  size="sm"
-                  className={`h-6 text-[10px] px-2 ${
-                    chatMode === "copilot"
-                      ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white border-0"
-                      : "bg-transparent"
-                  }`}
-                  onClick={() => {
-                    if (chatMode !== "copilot") {
-                      setChatMode("copilot")
-                      setAiChatMessages((prev) => [
-                        ...prev,
-                        {
-                          id: Date.now().toString(),
-                          content:
-                            "Co-Pilot Mode: I’ll use your requests to drive candidate ranking, filters, and campaigns.",
-                          sender: "ai",
-                        },
-                      ])
-                    }
-                  }}
-                >
-                  Co-Pilot
-                </Button>
-              </div>
-            </div>
-
             {/* CHAT TAB - scrollable messages, input pinned */}
             <TabsContent
               value="ai-chat"
@@ -671,43 +511,6 @@ export default function SharedAIPanel({
               <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
                 {/* Messages area - scrollable */}
                 <ScrollArea className="flex-1 min-h-0">
-                  {/* Suggestions (only when no messages) */}
-                  {aiChatMessages.length === 0 && !isAiChatLoading && (
-                    <div className="p-4 border-b border-border bg-muted">
-                      <p className="text-xs text-foreground mb-3 font-medium">
-                        Try asking:
-                      </p>
-                      <div className="flex flex-wrap gap-2 justify-start">
-                        {[
-                          "How many candidates are in the database?",
-                          "Show me all available jobs and their requirements.",
-                          "What skills are most commonly required across jobs?",
-                          "Which candidates have machine learning experience?",
-                          "Show me jobs in Paris with high salaries.",
-                          "Find candidates who speak multiple languages.",
-                        ].map((s, i) => (
-                          <Button
-                            key={i}
-                            variant="outline"
-                            size="sm"
-                            className="text-xs h-7 border-border text-muted-foreground hover:bg-accent hover:border-accent hover:text-accent-foreground bg-transparent break-all max-w-full text-left"
-                            style={{
-                              whiteSpace: "normal",
-                              wordBreak: "break-word",
-                              textAlign: "left",
-                            }}
-                            onClick={() => {
-                              setAiChatInput(s)
-                              handleAiChat(s)
-                            }}
-                          >
-                            {s}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Messages */}
                   <div className="space-y-4 p-4">
                     {aiChatMessages.map((m) => (
@@ -753,44 +556,221 @@ export default function SharedAIPanel({
                         </div>
                       </div>
                     )}
+
+                    {/* Start button (only when sourcing tab and no messages) */}
+                    {campaignPageTab === "sourcing" && aiChatMessages.length === 0 && !isAiChatLoading && !hasStartedChat && (
+                      <div className="p-4 border-t border-border bg-muted mt-4">
+                        <Button
+                          variant="default"
+                          size="lg"
+                          className="w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white border-0 hover:from-blue-600 hover:to-blue-500"
+                          onClick={async () => {
+                            setHasStartedChat(true)
+                            
+                            // Add user message first
+                            const userMsg = {
+                              id: Date.now().toString(),
+                              content: "Start New Batch",
+                              sender: "user" as const,
+                            }
+                            setAiChatMessages((prev) => [...prev, userMsg])
+                            setIsAiChatLoading(true)
+                            
+                            // Fetch the campaign data to get the full JD (description + skills + seniority + requirements)
+                            let jdText = ""
+                            const campaignIdToUse = campaignId || selectedContextCampaign
+                            if (campaignIdToUse) {
+                              try {
+                                const campaignResponse = await fetch("/api/campaigns-proxy")
+                                if (campaignResponse.ok) {
+                                  const result = await campaignResponse.json()
+                                  if (result?.success && Array.isArray(result.data)) {
+                                    const campaign = result.data.find(
+                                      (c: any) => c.campaign_id === campaignIdToUse
+                                    )
+                                    if (campaign?.job) {
+                                      const job = campaign.job
+                                      const parts: string[] = []
+                                      
+                                      // Job Description
+                                      if (job.description) {
+                                        parts.push(job.description)
+                                      }
+                                      
+                                      // Skills
+                                      if (job.skills && Array.isArray(job.skills) && job.skills.length > 0) {
+                                        const skillsList = job.skills
+                                          .map((s: any) => {
+                                            if (typeof s === 'string') return s
+                                            return s.name || s
+                                          })
+                                          .filter(Boolean)
+                                          .join(", ")
+                                        if (skillsList) {
+                                          parts.push(`\n\nSkills: ${skillsList}`)
+                                        }
+                                      }
+                                      
+                                      // Seniority
+                                      if (job.seniority) {
+                                        parts.push(`\n\nSeniority: ${job.seniority}`)
+                                      }
+                                      
+                                      // Requirements
+                                      if (job.requirements && Array.isArray(job.requirements) && job.requirements.length > 0) {
+                                        const requirementsList = job.requirements
+                                          .filter(Boolean)
+                                          .join("\n- ")
+                                        if (requirementsList) {
+                                          parts.push(`\n\nRequirements:\n- ${requirementsList}`)
+                                        }
+                                      }
+                                      
+                                      jdText = parts.join("")
+                                    }
+                                  }
+                                }
+                              } catch (error) {
+                                console.error("Error fetching campaign data:", error)
+                              }
+                            }
+
+                            // Call the webhook
+                            let chatResponse = ""
+                            let newQueryValue = ""
+                            try {
+                              const response = await fetch("/api/start-sourcing-batch", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                  chatinput: "start",
+                                  currentQuery: "none",
+                                  jd: jdText,
+                                }),
+                              })
+
+                              if (response.ok) {
+                                const result = await response.json()
+                                chatResponse = result.chatResponse || ""
+                                newQueryValue = result.newQuery || ""
+                                
+                                // Update the sourcing query if callback is provided
+                                if (newQueryValue && onSourcingQueryUpdate) {
+                                  onSourcingQueryUpdate(newQueryValue)
+                                }
+                              } else {
+                                console.error("Failed to call webhook:", response.status)
+                                const errorData = await response.json().catch(() => ({}))
+                                chatResponse = errorData.error || "Failed to start sourcing batch"
+                              }
+                            } catch (error) {
+                              console.error("Error calling webhook:", error)
+                              chatResponse = "Failed to start sourcing batch. Please try again."
+                            }
+
+                            // Display the chat response from webhook
+                            setIsAiChatLoading(false)
+                            if (chatResponse) {
+                              const aiMsg = {
+                                id: (Date.now() + 1).toString(),
+                                content: chatResponse,
+                                sender: "ai" as const,
+                              }
+                              setAiChatMessages((prev) => [...prev, aiMsg])
+                            } else {
+                              // Fallback message if no response
+                              const aiMsg = {
+                                id: (Date.now() + 1).toString(),
+                                content: "Starting the sourcing batch...",
+                                sender: "ai" as const,
+                              }
+                              setAiChatMessages((prev) => [...prev, aiMsg])
+                            }
+                          }}
+                        >
+                          Start
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Regular suggestions (only when no messages and not sourcing) */}
+                    {campaignPageTab !== "sourcing" && aiChatMessages.length === 0 && !isAiChatLoading && (
+                      <div className="p-4 border-t border-border bg-muted mt-4">
+                        <p className="text-xs text-foreground mb-3 font-medium">
+                          Try asking:
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {[
+                            "How many candidates are in the database?",
+                            "Show me all available jobs and their requirements.",
+                            "What skills are most commonly required across jobs?",
+                            "Which candidates have machine learning experience?",
+                            "Show me jobs in Paris with high salaries.",
+                            "Find candidates who speak multiple languages.",
+                          ].map((s, i) => (
+                            <Button
+                              key={i}
+                              variant="outline"
+                              size="sm"
+                              className="text-xs h-auto py-2 border-border text-muted-foreground hover:bg-accent hover:border-accent hover:text-accent-foreground bg-transparent w-full text-left justify-start"
+                              style={{
+                                whiteSpace: "normal",
+                                wordBreak: "break-word",
+                                textAlign: "left",
+                              }}
+                              onClick={() => {
+                                setAiChatInput(s)
+                                handleAiChat(s)
+                              }}
+                            >
+                              {s}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </ScrollArea>
 
-                {/* Input fixed at bottom */}
-                <div className="flex-shrink-0 bg-background border-t border-border px-3 pb-3 pt-2">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Ask about jobs, candidates, or skills..."
-                      value={aiChatInput}
-                      onChange={(e) => setAiChatInput(e.target.value)}
-                      disabled={isAiChatLoading}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault()
-                          if (aiChatInput.trim() && !isAiChatLoading) {
-                            handleAiChat(aiChatInput)
+                {/* Input fixed at bottom - only show if started or not sourcing tab */}
+                {(hasStartedChat || campaignPageTab !== "sourcing" || aiChatMessages.length > 0) && (
+                  <div className="flex-shrink-0 bg-background border-t border-border px-3 pb-3 pt-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Ask about jobs, candidates, or skills..."
+                        value={aiChatInput}
+                        onChange={(e) => setAiChatInput(e.target.value)}
+                        disabled={isAiChatLoading}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault()
+                            if (aiChatInput.trim() && !isAiChatLoading) {
+                              handleAiChat(aiChatInput)
+                            }
                           }
-                        }
-                      }}
-                    />
-                    <Button
-                      onClick={() => handleAiChat(aiChatInput)}
-                      size="sm"
-                      disabled={isAiChatLoading || !aiChatInput.trim()}
-                      className="text-white border-0"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, #4DA3FF 0%, #7AC4FF 100%)",
-                      }}
-                    >
-                      {isAiChatLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                    </Button>
+                        }}
+                      />
+                      <Button
+                        onClick={() => handleAiChat(aiChatInput)}
+                        size="sm"
+                        disabled={isAiChatLoading || !aiChatInput.trim()}
+                        className="text-white border-0"
+                        style={{
+                          background:
+                            "linear-gradient(90deg, #4DA3FF 0%, #7AC4FF 100%)",
+                        }}
+                      >
+                        {isAiChatLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </TabsContent>
 

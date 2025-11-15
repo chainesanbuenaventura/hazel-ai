@@ -11,28 +11,28 @@ const workflowSteps = [
     title: "Job Offer Creation",
     description: "Don't know what you're looking for? We'll brainstorm, identify skills, and help draft your job offer",
     icon: FileText,
-    color: "from-blue-500 to-cyan-500"
+    color: "from-blue-100 to-cyan-100"
   },
   {
     id: "sourcing-matching",
     title: "Sourcing & Matching",
     description: "AI finds and matches the best candidates based on your requirements",
     icon: Users,
-    color: "from-purple-500 to-pink-500"
+    color: "from-purple-100 to-pink-100"
   },
   {
     id: "outreach-prequalification",
     title: "Outreach & Prequalification",
     description: "Automated outreach and initial screening to ensure candidate fit",
     icon: MessageSquare,
-    color: "from-green-500 to-emerald-500"
+    color: "from-green-100 to-emerald-100"
   },
   {
     id: "scheduling-interview",
     title: "Scheduling & Interview",
     description: "Schedule interviews ensuring good fit, availability, and alignment",
     icon: Calendar,
-    color: "from-orange-500 to-red-500"
+    color: "from-orange-100 to-red-100"
   }
 ]
 

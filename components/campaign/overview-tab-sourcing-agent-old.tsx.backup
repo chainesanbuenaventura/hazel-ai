@@ -1,0 +1,66 @@
+// OLD SOURCING AGENT CODE - BACKUP
+// This is the old implementation that was replaced with the batch-based design
+
+// The old code handled:
+// - isSourcingReady state checking
+// - isSourcingStatusLoading state
+// - sourcingTooltip for showing messages
+// - Button with "+ Add Candidates" text
+// - Status badges (done, disabled, loading)
+// - Highlighting logic for sourcing ready/not ready states
+
+// Old rendering logic (lines ~545-562):
+{agent.id === "sourcing" ? (
+  isSourcingStatusLoading ? (
+    <div className="flex flex-col items-center justify-center gap-2 h-full">
+      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">
+        Checking sourcing status...
+      </p>
+    </div>
+  ) : (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleUploadCandidates}
+      className="w-full text-left justify-start bg-transparent h-8 text-sm"
+    >
+      + Add Candidates
+    </Button>
+  )
+) : (
+  // ... other agents
+)}
+
+// Old status display logic (lines ~507-536):
+{agent.id === "sourcing" &&
+  !isSourcingStatusLoading &&
+  !sourcingReadyHighlight && (
+    <>
+      <p className="text-sm text-muted-foreground mt-1">
+        Sourcing agent isn&apos;t live yet.
+      </p>
+      <p className="text-sm text-muted-foreground">
+        Upload candidates to begin.
+      </p>
+    </>
+  )}
+
+{agent.id === "sourcing" &&
+  sourcingReadyHighlight && (
+    <div className="mt-1 space-y-1">
+      <p className="text-sm text-emerald-700">
+        Sourced candidates available.
+      </p>
+      <p className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded px-2 py-1 inline-flex items-center gap-2">
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          Total sourced
+        </span>
+        <span className="font-semibold text-emerald-700">
+          {candidateCount}
+        </span>
+      </p>
+    </div>
+  )}
+

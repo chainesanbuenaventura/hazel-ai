@@ -1,12 +1,8 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { useState, useEffect } from "react"
-import { CheckCircle, Users, Building2, MapPin, DollarSign, Briefcase, Euro } from "lucide-react"
+import { Euro } from "lucide-react"
 
 interface Campaign {
   campaign_id: string
@@ -36,16 +32,6 @@ interface JDTabProps {
 }
 
 export function JDTab({ campaign = null }: JDTabProps) {
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [isDirty, setIsDirty] = useState(false)
-
-  useEffect(() => {
-    if (campaign) {
-      setTitle(campaign.job.title || "")
-      setDescription(campaign.job.description || "")
-    }
-  }, [campaign])
 
   if (!campaign) {
     return (
@@ -73,12 +59,7 @@ export function JDTab({ campaign = null }: JDTabProps) {
   const salaryRange = formatSalary()
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">Job Description</h2>
-        <p className="text-muted-foreground">Complete job details and requirements</p>
-      </div>
-
+    <div className="max-w-4xl mx-auto space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl flex items-center justify-between">
@@ -132,15 +113,7 @@ export function JDTab({ campaign = null }: JDTabProps) {
             {/* Job Description */}
             <div className="space-y-2">
               <h4 className="font-semibold text-gray-900">Job Description</h4>
-              <Textarea
-                value={description}
-                onChange={(e) => {
-                  setDescription(e.target.value)
-                  setIsDirty(true)
-                }}
-                placeholder="Enter full job description"
-                className="min-h-32 text-sm text-gray-600 leading-relaxed"
-              />
+              <p className="text-sm text-gray-600 leading-relaxed">{safeRender(campaign.job.description)}</p>
             </div>
 
             {/* Salary Section */}
@@ -218,24 +191,6 @@ export function JDTab({ campaign = null }: JDTabProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Save/Cancel Buttons */}
-      {isDirty && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex gap-2">
-              <Button onClick={() => setIsDirty(false)}>Save Changes</Button>
-              <Button variant="outline" onClick={() => {
-                setTitle(campaign.job.title || "")
-                setDescription(campaign.job.description || "")
-                setIsDirty(false)
-              }}>
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

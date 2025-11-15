@@ -31,6 +31,7 @@ import { InboxTab } from "@/components/campaign/inbox-tab"
 import { PreQuestionsTab } from "@/components/campaign/pre-questions-tab"
 import { JDTab } from "@/components/campaign/jd-tab"
 import { ScreeningTab } from "@/components/campaign/screening-tab"
+import { SourcingTab } from "@/components/campaign/sourcing-tab"
 import SharedAIPanel from "@/components/shared-ai-panel"
 import { useAIPanel } from "@/components/ai-panel-context"
 
@@ -65,6 +66,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
   const [aiPanelTab, setAiPanelTab] = useState<"ai-chat" | "profile">("ai-chat")
   const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sourcingNewQuery, setSourcingNewQuery] = useState<string>("")
 
   // Fetch this campaign
   useEffect(() => {
@@ -125,7 +127,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
     setActiveTab(tab)
 
     // Only reset AI panel when leaving candidate-focused tabs
-    if (tab !== "candidate-pipeline" && tab !== "screening") {
+    if (tab !== "candidate-pipeline" && tab !== "sourcing" && tab !== "screening") {
       setSelectedCandidate(null)
       setAiPanelTab("ai-chat")
       setSelectedContextCandidate(null)
@@ -299,6 +301,9 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                       <TabsTrigger value="candidate-pipeline">
                         Candidate Pipeline
                       </TabsTrigger>
+                      <TabsTrigger value="sourcing">
+                        Sourcing
+                      </TabsTrigger>
                       <TabsTrigger value="screening">
                         Screening
                       </TabsTrigger>
@@ -338,6 +343,8 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                       campaignId={campaignId}
                     />
                   )}
+
+                  {activeTab === "sourcing" && <SourcingTab campaignId={campaignId} newQuery={sourcingNewQuery} />}
 
                   {activeTab === "screening" && (
                     <ScreeningTab
@@ -380,6 +387,9 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
             }
             selectedCandidateDetails={selectedCandidate}
             onCloseProfile={() => setSelectedCandidate(null)}
+            campaignPageTab={activeTab}
+            campaignId={campaignId}
+            onSourcingQueryUpdate={setSourcingNewQuery}
           />
         </div>
       </SidebarInset>
