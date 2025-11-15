@@ -38,16 +38,6 @@ import { usePathname } from "next/navigation"
 // Menu items
 const mainItems = [
   {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Message Copilot",
-    url: "/dashboard/linkedin-outreach",
-    icon: Send,
-  },
-  {
     title: "Vibe Hiring",
     url: "/dashboard/vibe-hiring",
     icon: Sparkles,
@@ -56,11 +46,6 @@ const mainItems = [
     title: "Recruitment Campaigns",
     url: "/dashboard/campaigns",
     icon: FolderKanban,
-  },
-  {
-    title: "Candidates",
-    url: "/dashboard/candidates",
-    icon: UserCheck,
   },
 ]
 

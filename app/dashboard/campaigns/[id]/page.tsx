@@ -26,7 +26,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { OverviewTab } from "@/components/campaign/overview-tab"
-import { CandidatePipelineTab } from "@/components/campaign/candidate-pipeline-tab"
 import { InboxTab } from "@/components/campaign/inbox-tab"
 import { PreQuestionsTab } from "@/components/campaign/pre-questions-tab"
 import { JDTab } from "@/components/campaign/jd-tab"
@@ -127,7 +126,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
     setActiveTab(tab)
 
     // Only reset AI panel when leaving candidate-focused tabs
-    if (tab !== "candidate-pipeline" && tab !== "sourcing" && tab !== "screening") {
+    if (tab !== "sourcing" && tab !== "screening") {
       setSelectedCandidate(null)
       setAiPanelTab("ai-chat")
       setSelectedContextCandidate(null)
@@ -298,9 +297,6 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                   >
                     <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
                       <TabsTrigger value="overview">Overview</TabsTrigger>
-                      <TabsTrigger value="candidate-pipeline">
-                        Candidate Pipeline
-                      </TabsTrigger>
                       <TabsTrigger value="sourcing">
                         Sourcing
                       </TabsTrigger>
@@ -311,7 +307,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                         Inbox
                       </TabsTrigger>
                       <TabsTrigger value="pre-questions">
-                        Pre-qualifying Questions
+                        Prequalify
                       </TabsTrigger>
                       <TabsTrigger value="jd">
                         Job Description
@@ -331,15 +327,6 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                   {activeTab === "overview" && (
                     <OverviewTab
                       onNavigateToTab={setActiveTab}
-                      campaignId={campaignId}
-                    />
-                  )}
-
-                  {activeTab === "candidate-pipeline" && (
-                    <CandidatePipelineTab
-                      onCandidateClick={handleCandidateClick}
-                      selectedCandidateId={selectedCandidate?.id || null}
-                      isRightPanelCollapsed={isRightPanelCollapsed}
                       campaignId={campaignId}
                     />
                   )}
